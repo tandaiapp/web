@@ -20,6 +20,45 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+
+  <style>
+    /* ── NOTIF PANEL: true viewport-center fix ── */
+    .notif-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .45);
+      z-index: 200;
+    }
+    .notif-panel {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 201;
+      width: min(480px, calc(100vw - 32px));
+      max-height: calc(100vh - 48px);
+      overflow-y: auto;
+      border-radius: 20px;
+      /* remove any margin/offset that might have existed */
+      margin: 0;
+    }
+    .notif-panel.hidden,
+    .notif-overlay.hidden { display: none; }
+
+    /* ── SVG icon helpers ── */
+    .svg-icon {
+      display: inline-block;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+    .btn-icon .svg-icon,
+    .btn-logout .svg-icon { pointer-events: none; }
+    .streak-badge .svg-icon { margin-right: 4px; }
+    .footer-tab .svg-icon { display: block; margin: 0 auto 2px; }
+    .empty-state .svg-icon { width: 48px; height: 48px; opacity: .45; }
+    .notif-panel-header h3 { display: flex; align-items: center; gap: 8px; }
+    .notif-test-row button { display: inline-flex; align-items: center; }
+  </style>
 </head>
 <body>
 
@@ -27,13 +66,23 @@
   <div id="auth-screen" class="screen active">
     <div class="auth-wrapper">
       <div class="auth-brand">
-        <div class="brand-icon">✦</div>
+        <div class="brand-icon">
+          <!-- Sparkle star -->
+          <svg class="svg-icon" width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M16 4L18 13 28 16 18 19 16 28 14 19 4 16 14 13Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round" fill="none"/>
+          </svg>
+        </div>
         <h1 class="brand-title">Tandai</h1>
         <p class="brand-sub">Tandai hari kamu mulai dari sini</p>
       </div>
 
       <div id="login-card" class="auth-card active">
-        <h2 class="auth-heading">Selamat datang kembali 👋</h2>
+        <h2 class="auth-heading">Selamat datang kembali
+          <!-- Wave hand -->
+          <svg class="svg-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M7 11.5V7a1.5 1.5 0 013 0v4.5M10 8V6a1.5 1.5 0 013 0v2M13 8V6.5a1.5 1.5 0 013 0V9M16 9.5a1.5 1.5 0 013 0v3c0 4-2.5 7.5-6.5 7.5S6 16.5 6 13.5v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </h2>
         <div class="field-group">
           <label>Username</label>
           <input type="text" id="login-username" placeholder="nama kamu..." autocomplete="username" />
@@ -48,7 +97,13 @@
       </div>
 
       <div id="signup-card" class="auth-card">
-        <h2 class="auth-heading">Mulai perjalananmu ✨</h2>
+        <h2 class="auth-heading">Mulai perjalananmu
+          <!-- Sparkles double -->
+          <svg class="svg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5Z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+            <path d="M19 14l.8 2.8 2.8.8-2.8.8-.8 2.8-.8-2.8-2.8-.8 2.8-.8Z" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round"/>
+          </svg>
+        </h2>
         <div class="field-group">
           <label>Username</label>
           <input type="text" id="signup-username" placeholder="nama kamu..." autocomplete="username" />
@@ -75,24 +130,45 @@
       <!-- Header -->
       <header class="dash-header">
         <div class="header-left">
-          <div class="header-brand">✦ Tandai</div>
-          <h2 class="header-greeting">Hai, <span id="display-username">kamu</span> 👋</h2>
+          <div class="header-brand">
+            <svg class="svg-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:3px">
+              <path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+            Tandai
+          </div>
+          <h2 class="header-greeting">Hai, <span id="display-username">kamu</span>
+            <svg class="svg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M7 11.5V7a1.5 1.5 0 013 0v4.5M10 8V6a1.5 1.5 0 013 0v2M13 8V6.5a1.5 1.5 0 013 0V9M16 9.5a1.5 1.5 0 013 0v3c0 4-2.5 7.5-6.5 7.5S6 16.5 6 13.5v-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </h2>
         </div>
         <div class="header-right">
           <div class="streak-badge" id="streak-badge">
-            <span class="streak-fire">🔥</span>
+            <!-- Flame -->
+            <svg class="svg-icon streak-fire" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 21c-4.4 0-8-3.1-8-7 0-2.4 1.2-4.5 3-5.8 0 1.1.6 2.1 1.5 2.7C8.9 9.4 9 7.2 10.5 5c.5 2 1.5 3.3 3 3.8-.5-1.6 0-3.3.5-4.8 2.5 2 4 5 4 7.5 0 1-.3 2-.8 2.8.3-.6.5-1.3.5-2-.3 1.3-2 2.7-4 2.7.5-.8.8-1.8.6-2.8C13.4 14 12.8 16 12 17.5 11.2 16 10.6 14 9.4 12.2c-.2 1 .1 2 .6 2.8-2-.1-3.7-1.5-3.7-3.3 0 .7.2 1.4.5 2C6.3 13 6 12 6 11c0 2.3 0 4 0 6 0 2.2 1.8 4 4 4z" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
             <span id="streak-count">0</span>
             <span class="streak-label">hari</span>
           </div>
-          <!-- Dark Mode Toggle -->
+          <!-- Dark Mode -->
           <button class="btn-icon" id="btn-darkmode" onclick="toggleDarkMode()" title="Ganti tema">
-            <span id="darkmode-icon">🌙</span>
+            <svg class="svg-icon darkmode-icon-ref" id="darkmode-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </button>
-          <!-- Notification Toggle -->
+          <!-- Notification -->
           <button class="btn-icon" id="btn-notif" onclick="toggleNotifPanel()" title="Notifikasi">
-            <span>🔔</span>
+            <svg class="svg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </button>
-          <button class="btn-logout" onclick="handleLogout()" title="Keluar">↩</button>
+          <!-- Logout -->
+          <button class="btn-logout" onclick="handleLogout()" title="Keluar">
+            <svg class="svg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </button>
         </div>
       </header>
 
@@ -106,7 +182,11 @@
           <div class="xp-bar-fill" id="xp-bar-fill"></div>
           <div class="xp-bar-glow" id="xp-bar-glow"></div>
         </div>
-        <div class="xp-sublabel" id="xp-sublabel">Selesaikan task untuk dapat XP! ✨</div>
+        <div class="xp-sublabel" id="xp-sublabel">Selesaikan task untuk dapat XP!
+          <svg class="svg-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-left:3px">
+            <path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5Z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>
+          </svg>
+        </div>
       </section>
 
       <!-- Task Input -->
@@ -115,7 +195,9 @@
           <input type="text" id="task-input" placeholder="Mau tandai apa hari ini?" maxlength="80"
             onkeydown="if(event.key==='Enter') addTask()" />
           <button class="btn-add" onclick="addTask()">
-            <span>+</span>
+            <svg class="svg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+            </svg>
           </button>
         </div>
       </section>
@@ -128,7 +210,12 @@
         </div>
         <div id="task-list" class="task-list">
           <div class="empty-state" id="empty-state">
-            <div class="empty-icon">🌿</div>
+            <div class="empty-icon">
+              <!-- Leaf / plant -->
+              <svg class="svg-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17 8C8 10 5.9 16.17 3.82 19.34M9 19.34C9 19.34 10.5 15 12 12M2 12C2 12 5 3 17 3c0 9-4 14-15 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
             <p>Belum ada task hari ini.<br>Yuk, mulai tandai sesuatu!</p>
           </div>
         </div>
@@ -137,15 +224,25 @@
       <!-- Footer / Bottom Nav -->
       <footer class="dash-footer">
         <button class="footer-tab active" id="tab-today" onclick="switchTab('today')">
-          <span class="tab-icon">📋</span>
+          <!-- Clipboard check -->
+          <svg class="svg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
           <span class="tab-label">Hari Ini</span>
         </button>
         <button class="footer-tab" id="tab-calendar" onclick="switchTab('calendar')">
-          <span class="tab-icon">📅</span>
+          <!-- Calendar -->
+          <svg class="svg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
           <span class="tab-label">Kalender</span>
         </button>
         <button class="footer-tab" id="tab-history" onclick="switchTab('history')">
-          <span class="tab-icon">📖</span>
+          <!-- Book -->
+          <svg class="svg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 19.5A2.5 2.5 0 016.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
           <span class="tab-label">Riwayat</span>
         </button>
       </footer>
@@ -161,12 +258,24 @@
     <div class="dash-wrapper">
       <header class="dash-header">
         <div class="header-left">
-          <div class="header-brand">✦ Tandai</div>
-          <h2 class="header-greeting">Kalender 📅</h2>
+          <div class="header-brand">
+            <svg class="svg-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:3px">
+              <path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+            Tandai
+          </div>
+          <h2 class="header-greeting">Kalender
+            <svg class="svg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/>
+              <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+            </svg>
+          </h2>
         </div>
         <div class="header-right">
           <button class="btn-icon" id="btn-darkmode-cal" onclick="toggleDarkMode()" title="Ganti tema">
-            <span class="darkmode-icon-ref">🌙</span>
+            <svg class="svg-icon darkmode-icon-ref" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </button>
         </div>
       </header>
@@ -195,15 +304,22 @@
 
       <footer class="dash-footer">
         <button class="footer-tab" id="tab-today-cal" onclick="switchTab('today')">
-          <span class="tab-icon">📋</span>
+          <svg class="svg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
           <span class="tab-label">Hari Ini</span>
         </button>
         <button class="footer-tab active" id="tab-calendar-cal" onclick="switchTab('calendar')">
-          <span class="tab-icon">📅</span>
+          <svg class="svg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
           <span class="tab-label">Kalender</span>
         </button>
         <button class="footer-tab" id="tab-history-cal" onclick="switchTab('history')">
-          <span class="tab-icon">📖</span>
+          <svg class="svg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 19.5A2.5 2.5 0 016.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
           <span class="tab-label">Riwayat</span>
         </button>
       </footer>
@@ -215,12 +331,23 @@
     <div class="dash-wrapper">
       <header class="dash-header">
         <div class="header-left">
-          <div class="header-brand">✦ Tandai</div>
-          <h2 class="header-greeting">Riwayat 📖</h2>
+          <div class="header-brand">
+            <svg class="svg-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right:3px">
+              <path d="M12 2l1.5 5.5L19 9l-5.5 1.5L12 16l-1.5-5.5L5 9l5.5-1.5Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+            </svg>
+            Tandai
+          </div>
+          <h2 class="header-greeting">Riwayat
+            <svg class="svg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 19.5A2.5 2.5 0 016.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </h2>
         </div>
         <div class="header-right">
           <button class="btn-icon" onclick="toggleDarkMode()" title="Ganti tema">
-            <span class="darkmode-icon-ref">🌙</span>
+            <svg class="svg-icon darkmode-icon-ref" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 12.79A9 9 0 1111.21 3a7 7 0 009.79 9.79z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
           </button>
         </div>
       </header>
@@ -243,7 +370,13 @@
 
         <div class="history-list" id="history-list">
           <div class="empty-state">
-            <div class="empty-icon">📭</div>
+            <div class="empty-icon">
+              <!-- Empty inbox / mailbox -->
+              <svg class="svg-icon" width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M22 12h-6l-2 3H10l-2-3H2" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
             <p>Belum ada riwayat.<br>Mulai tandai task hari ini!</p>
           </div>
         </div>
@@ -251,15 +384,22 @@
 
       <footer class="dash-footer">
         <button class="footer-tab" id="tab-today-hist" onclick="switchTab('today')">
-          <span class="tab-icon">📋</span>
+          <svg class="svg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
           <span class="tab-label">Hari Ini</span>
         </button>
         <button class="footer-tab" id="tab-calendar-hist" onclick="switchTab('calendar')">
-          <span class="tab-icon">📅</span>
+          <svg class="svg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="4" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.6"/>
+            <path d="M16 2v4M8 2v4M3 10h18" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
           <span class="tab-label">Kalender</span>
         </button>
         <button class="footer-tab active" id="tab-history-hist" onclick="switchTab('history')">
-          <span class="tab-icon">📖</span>
+          <svg class="svg-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M4 19.5A2.5 2.5 0 016.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
           <span class="tab-label">Riwayat</span>
         </button>
       </footer>
@@ -270,8 +410,18 @@
   <div id="notif-overlay" class="notif-overlay hidden" onclick="closeNotifPanel()"></div>
   <div id="notif-panel" class="notif-panel hidden">
     <div class="notif-panel-header">
-      <h3>🔔 Pengingat Harian</h3>
-      <button class="notif-close" onclick="closeNotifPanel()">✕</button>
+      <h3>
+        <svg class="svg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Pengingat Harian
+      </h3>
+      <button class="notif-close" onclick="closeNotifPanel()">
+        <!-- X close -->
+        <svg class="svg-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
     </div>
     <div class="notif-body">
       <p class="notif-desc">Atur waktu notifikasi supaya kamu ingat untuk tandai task setiap hari.</p>
@@ -299,7 +449,12 @@
       </div>
 
       <div class="notif-test-row">
-        <button class="btn-notif-test" onclick="sendTestNotif()">Kirim Notifikasi Test 🔔</button>
+        <button class="btn-notif-test" onclick="sendTestNotif()">
+          Kirim Notifikasi Test
+          <svg class="svg-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-left:6px">
+            <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </button>
       </div>
 
       <p class="notif-note" id="notif-permission-note"></p>
