@@ -20,52 +20,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
-
-  <style>
-    /*
-     * Override style.css bottom-sheet positioning for notif panel.
-     * style.css uses: bottom:0; transform:translateX(-50%); border-radius top only.
-     * We force true viewport centering here with !important.
-     */
-    .notif-overlay {
-      position: fixed !important;
-      inset: 0 !important;
-      background: rgba(0, 0, 0, .45) !important;
-      z-index: 200 !important;
-      backdrop-filter: blur(3px) !important;
-    }
-    .notif-panel {
-      position: fixed !important;
-      top: 50% !important;
-      left: 50% !important;
-      bottom: auto !important;
-      right: auto !important;
-      transform: translate(-50%, -50%) !important;
-      z-index: 201 !important;
-      width: min(460px, calc(100vw - 32px)) !important;
-      max-height: calc(100dvh - 48px) !important;
-      overflow-y: auto !important;
-      border-radius: 20px !important;
-      animation: notifPop 280ms cubic-bezier(0.34, 1.2, 0.64, 1) forwards !important;
-    }
-    .notif-panel.hidden,
-    .notif-overlay.hidden { display: none !important; }
-
-    @keyframes notifPop {
-      from { opacity: 0; transform: translate(-50%, -47%) scale(0.96); }
-      to   { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-    }
-
-    /* Footer tab: no icon, just label — bump label size slightly */
-    .footer-tab .tab-label {
-      font-size: 13px;
-      letter-spacing: 0.2px;
-    }
-    .footer-tab.active .tab-label {
-      color: var(--matcha-dark);
-      font-weight: 800;
-    }
-  </style>
 </head>
 <body>
 
@@ -114,10 +68,11 @@
     <div class="auth-deco auth-deco-3">◌</div>
   </div>
 
-  <!-- ===== DASHBOARD SCREEN ===== -->
+  <!-- ===== MAIN SCREEN (single page) ===== -->
   <div id="dashboard-screen" class="screen">
     <div class="dash-wrapper">
 
+      <!-- Header -->
       <header class="dash-header">
         <div class="header-left">
           <div class="header-brand">✦ Tandai</div>
@@ -129,16 +84,31 @@
             <span id="streak-count">0</span>
             <span class="streak-label">hari</span>
           </div>
-          <button class="btn-icon" id="btn-darkmode" onclick="toggleDarkMode()" title="Ganti tema">
+          <button class="btn-icon" onclick="toggleDarkMode()" title="Ganti tema">
             <span id="darkmode-icon">🌙</span>
           </button>
-          <button class="btn-icon" id="btn-notif" onclick="toggleNotifPanel()" title="Notifikasi">
+          <button class="btn-icon" onclick="toggleNotifPanel()" title="Notifikasi">
             <span>🔔</span>
           </button>
           <button class="btn-logout" onclick="handleLogout()" title="Keluar">↩</button>
         </div>
       </header>
 
+      <!-- ── WEEKLY CALENDAR STRIP ── -->
+      <section class="week-strip-section">
+        <div class="week-strip-nav">
+          <button class="week-nav-btn" onclick="changeWeek(-1)" title="Minggu sebelumnya">‹</button>
+          <span class="week-month-label" id="week-month-label">Mei 2025</span>
+          <button class="week-nav-btn" onclick="changeWeek(1)" title="Minggu berikutnya">›</button>
+        </div>
+        <div class="week-days-header">
+          <span>Min</span><span>Sen</span><span>Sel</span><span>Rab</span>
+          <span>Kam</span><span>Jum</span><span>Sab</span>
+        </div>
+        <div class="week-days-row" id="week-days-row"></div>
+      </section>
+
+      <!-- ── XP SECTION ── -->
       <section class="xp-section">
         <div class="xp-info">
           <span class="xp-label">XP hari ini</span>
@@ -151,146 +121,68 @@
         <div class="xp-sublabel" id="xp-sublabel">Selesaikan task untuk dapat XP!</div>
       </section>
 
-      <section class="task-input-section">
-        <div class="input-row">
-          <input type="text" id="task-input" placeholder="Mau tandai apa hari ini?" maxlength="80"
-            onkeydown="if(event.key==='Enter') addTask()" />
-          <button class="btn-add" onclick="addTask()">
-            <span>+</span>
-          </button>
-        </div>
-      </section>
+      <!-- ── CONTENT AREA: today tasks OR day detail ── -->
+      <div id="content-area">
 
-      <section class="task-section">
-        <div class="task-header-row">
-          <span class="task-section-title">Daftar Tandai</span>
-          <span class="task-progress-text" id="task-progress-text">0 / 0 selesai</span>
-        </div>
-        <div id="task-list" class="task-list">
-          <div class="empty-state" id="empty-state">
-            <div class="empty-icon">🌿</div>
-            <p>Belum ada task hari ini.<br>Yuk, mulai tandai sesuatu!</p>
-          </div>
-        </div>
-      </section>
+        <!-- TODAY VIEW -->
+        <div id="view-today">
+          <section class="task-input-section">
+            <div class="input-row">
+              <input type="text" id="task-input" placeholder="Mau tandai apa hari ini?" maxlength="80"
+                onkeydown="if(event.key==='Enter') addTask()" />
+              <button class="btn-add" onclick="addTask()"><span>+</span></button>
+            </div>
+          </section>
 
-      <footer class="dash-footer">
-        <button class="footer-tab active" id="tab-today" onclick="switchTab('today')">
-          <span class="tab-label">Hari Ini</span>
-        </button>
-        <button class="footer-tab" id="tab-calendar" onclick="switchTab('calendar')">
-          <span class="tab-label">Kalender</span>
-        </button>
-        <button class="footer-tab" id="tab-history" onclick="switchTab('history')">
-          <span class="tab-label">Riwayat</span>
-        </button>
-      </footer>
+          <section class="task-section">
+            <div class="task-header-row">
+              <span class="task-section-title">Daftar Tandai</span>
+              <span class="task-progress-text" id="task-progress-text">0 / 0 selesai</span>
+            </div>
+            <div id="task-list" class="task-list">
+              <div class="empty-state" id="empty-state">
+                <div class="empty-icon">🌿</div>
+                <p>Belum ada task hari ini.<br>Yuk, mulai tandai sesuatu!</p>
+              </div>
+            </div>
+          </section>
+        </div>
 
-    </div>
+        <!-- HISTORY / DAY DETAIL VIEW -->
+        <div id="view-daydetail" class="hidden">
+          <section class="day-detail-section">
+            <div class="day-detail-back-row">
+              <button class="btn-back" onclick="showTodayView()">← Hari Ini</button>
+              <div class="day-detail-badge" id="day-detail-xp-badge">0 XP</div>
+            </div>
+            <div class="day-detail-title-row">
+              <span class="day-detail-big-title" id="day-detail-big-title">Tanggal</span>
+            </div>
+
+            <!-- Stats row (only shown when viewing past) -->
+            <div class="history-stats-mini" id="history-stats-mini">
+              <div class="stat-mini-card">
+                <span class="stat-mini-num" id="hist-total-days">0</span>
+                <span class="stat-mini-label">Hari Aktif</span>
+              </div>
+              <div class="stat-mini-card">
+                <span class="stat-mini-num" id="hist-total-tasks">0</span>
+                <span class="stat-mini-label">Task Selesai</span>
+              </div>
+              <div class="stat-mini-card">
+                <span class="stat-mini-num" id="hist-best-streak">0</span>
+                <span class="stat-mini-label">Streak Terbaik</span>
+              </div>
+            </div>
+
+            <div class="day-detail-tasks" id="day-detail-tasks"></div>
+          </section>
+        </div>
+
+      </div><!-- /content-area -->
+
+    </div><!-- /dash-wrapper -->
     <div id="xp-floats" class="xp-floats"></div>
-  </div>
-
-  <!-- ===== CALENDAR SCREEN ===== -->
-  <div id="calendar-screen" class="screen">
-    <div class="dash-wrapper">
-      <header class="dash-header">
-        <div class="header-left">
-          <div class="header-brand">✦ Tandai</div>
-          <h2 class="header-greeting">Kalender</h2>
-        </div>
-        <div class="header-right">
-          <button class="btn-icon" id="btn-darkmode-cal" onclick="toggleDarkMode()" title="Ganti tema">
-            <span class="darkmode-icon-ref">🌙</span>
-          </button>
-        </div>
-      </header>
-
-      <section class="calendar-section">
-        <div class="calendar-nav">
-          <button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button>
-          <span class="cal-month-label" id="cal-month-label">Mei 2025</span>
-          <button class="cal-nav-btn" onclick="changeMonth(1)">›</button>
-        </div>
-        <div class="calendar-grid-header">
-          <span>Min</span><span>Sen</span><span>Sel</span><span>Rab</span>
-          <span>Kam</span><span>Jum</span><span>Sab</span>
-        </div>
-        <div class="calendar-grid" id="calendar-grid"></div>
-
-        <div class="day-detail" id="day-detail" style="display:none;">
-          <div class="day-detail-header">
-            <span class="day-detail-title" id="day-detail-title">Tanggal</span>
-            <span class="day-detail-xp" id="day-detail-xp"></span>
-          </div>
-          <div class="day-detail-tasks" id="day-detail-tasks"></div>
-        </div>
-      </section>
-
-      <footer class="dash-footer">
-        <button class="footer-tab" id="tab-today-cal" onclick="switchTab('today')">
-          <span class="tab-label">Hari Ini</span>
-        </button>
-        <button class="footer-tab active" id="tab-calendar-cal" onclick="switchTab('calendar')">
-          <span class="tab-label">Kalender</span>
-        </button>
-        <button class="footer-tab" id="tab-history-cal" onclick="switchTab('history')">
-          <span class="tab-label">Riwayat</span>
-        </button>
-      </footer>
-    </div>
-  </div>
-
-  <!-- ===== HISTORY SCREEN ===== -->
-  <div id="history-screen" class="screen">
-    <div class="dash-wrapper">
-      <header class="dash-header">
-        <div class="header-left">
-          <div class="header-brand">✦ Tandai</div>
-          <h2 class="header-greeting">Riwayat</h2>
-        </div>
-        <div class="header-right">
-          <button class="btn-icon" onclick="toggleDarkMode()" title="Ganti tema">
-            <span class="darkmode-icon-ref">🌙</span>
-          </button>
-        </div>
-      </header>
-
-      <section class="history-section">
-        <div class="history-stats">
-          <div class="stat-card">
-            <span class="stat-number" id="hist-total-days">0</span>
-            <span class="stat-label">Hari Aktif</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-number" id="hist-total-tasks">0</span>
-            <span class="stat-label">Task Selesai</span>
-          </div>
-          <div class="stat-card">
-            <span class="stat-number" id="hist-best-streak">0</span>
-            <span class="stat-label">Streak Terbaik</span>
-          </div>
-        </div>
-
-        <div class="history-list" id="history-list">
-          <div class="empty-state">
-            <div class="empty-icon">📭</div>
-            <p>Belum ada riwayat.<br>Mulai tandai task hari ini!</p>
-          </div>
-        </div>
-      </section>
-
-      <footer class="dash-footer">
-        <button class="footer-tab" id="tab-today-hist" onclick="switchTab('today')">
-          <span class="tab-label">Hari Ini</span>
-        </button>
-        <button class="footer-tab" id="tab-calendar-hist" onclick="switchTab('calendar')">
-          <span class="tab-label">Kalender</span>
-        </button>
-        <button class="footer-tab active" id="tab-history-hist" onclick="switchTab('history')">
-          <span class="tab-label">Riwayat</span>
-        </button>
-      </footer>
-    </div>
   </div>
 
   <!-- ===== NOTIFICATION PANEL ===== -->
@@ -299,7 +191,6 @@
     <div class="notif-panel-header">
       <h3>🔔 Pengingat Harian</h3>
       <button class="notif-close" onclick="closeNotifPanel()">✕</button>
-
     </div>
     <div class="notif-body">
       <p class="notif-desc">Atur waktu notifikasi supaya kamu ingat untuk tandai task setiap hari.</p>
