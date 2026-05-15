@@ -1,6 +1,6 @@
 /* ===========================
-   TANDAI — script.js (v3)
-   + Dark Mode + Calendar + History + Notifications
+   TANDAI — script.js (v4)
+   Single-page · Weekly strip · No tab footer
    Backend: Google Apps Script
    =========================== */
 
@@ -15,11 +15,12 @@ let sessionToken = null;
 let localTasks   = [];
 let localXP      = 0;
 let localStreak  = 0;
-let currentTab   = 'today';
 
-// Calendar state
-let calYear  = new Date().getFullYear();
-let calMonth = new Date().getMonth(); // 0-indexed
+// Week strip state: offset in weeks from current week (0 = this week)
+let weekOffset = 0;
+// Currently selected date key (YYYY-MM-DD), null = today
+let selectedDateKey = null;
+
 let historyData = {}; // { "YYYY-MM-DD": { tasks: [], xp: 0 } }
 
 // ─── API Helper ──────────────────────────────────────
@@ -48,6 +49,28 @@ function loadSession() {
   };
 }
 
+// ─── Date helpers ────────────────────────────────────
+function todayKey() {
+  const d = new Date();
+  return dateToKey(d);
+}
+
+function dateToKey(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function keyToDate(key) {
+  return new Date(key + 'T00:00:00');
+}
+
+// Get the Sunday of the week containing `date`
+function weekStart(date) {
+  const d = new Date(date);
+  d.setHours(0,0,0,0);
+  d.setDate(d.getDate() - d.getDay());
+  return d;
+}
+
 // ─── History (local storage) ─────────────────────────
 function saveHistoryLocal() {
   if (!currentUser) return;
@@ -59,11 +82,8 @@ function saveHistoryLocal() {
   try {
     const stored = JSON.parse(localStorage.getItem(`tandai_history_${currentUser}`) || '{}');
     stored[today] = snapshot;
-    // Keep last 90 days only
     const keys = Object.keys(stored).sort();
-    while (keys.length > 90) {
-      delete stored[keys.shift()];
-    }
+    while (keys.length > 90) { delete stored[keys.shift()]; }
     localStorage.setItem(`tandai_history_${currentUser}`, JSON.stringify(stored));
     historyData = stored;
   } catch(e) { console.warn('History save failed:', e); }
@@ -76,11 +96,6 @@ function loadHistoryLocal() {
   } catch(e) { historyData = {}; }
 }
 
-function todayKey() {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-
 // ─── Dark Mode ───────────────────────────────────────
 function initDarkMode() {
   const saved = localStorage.getItem('tandai_theme') || 'light';
@@ -90,11 +105,8 @@ function initDarkMode() {
 function applyTheme(theme) {
   document.documentElement.setAttribute('data-theme', theme);
   localStorage.setItem('tandai_theme', theme);
-  // Update all icons
   const icon = theme === 'dark' ? '☀️' : '🌙';
-  document.querySelectorAll('#darkmode-icon, .darkmode-icon-ref').forEach(el => {
-    el.textContent = icon;
-  });
+  document.querySelectorAll('#darkmode-icon').forEach(el => el.textContent = icon);
 }
 
 function toggleDarkMode() {
@@ -161,6 +173,8 @@ async function handleLogout() {
   localXP      = 0;
   localStreak  = 0;
   historyData  = {};
+  weekOffset   = 0;
+  selectedDateKey = null;
   switchScreen('auth-screen');
   document.getElementById('login-username').value = '';
   document.getElementById('login-password').value = '';
@@ -211,20 +225,6 @@ function switchToLogin() {
   document.getElementById('login-card').classList.add('active');
 }
 
-// ─── Tab Navigation ───────────────────────────────────
-function switchTab(tab) {
-  currentTab = tab;
-  if (tab === 'today') {
-    switchScreen('dashboard-screen');
-  } else if (tab === 'calendar') {
-    switchScreen('calendar-screen');
-    renderCalendar();
-  } else if (tab === 'history') {
-    switchScreen('history-screen');
-    renderHistory();
-  }
-}
-
 // ─── Dashboard ────────────────────────────────────────
 async function loadDashboard() {
   switchScreen('dashboard-screen');
@@ -237,14 +237,161 @@ async function loadDashboard() {
     if (res.ok) localTasks = res.tasks || [];
   } catch(e) { console.warn('Load tasks failed:', e); }
 
-  // Save today's snapshot to history
   saveHistoryLocal();
-
   setDashLoading(false);
+
+  // Always start on today view
+  weekOffset = 0;
+  selectedDateKey = null;
+  showTodayView();
+
+  renderWeekStrip();
   renderTasks();
   renderXP();
   setupConfettiObserver();
   setupNotifSchedule();
+}
+
+// ─── View switching: Today vs Day Detail ─────────────
+function showTodayView() {
+  selectedDateKey = null;
+  document.getElementById('view-today').classList.remove('hidden');
+  document.getElementById('view-daydetail').classList.add('hidden');
+  // Re-highlight today on strip
+  renderWeekStrip();
+}
+
+function showDayDetail(dateKey) {
+  selectedDateKey = dateKey;
+  const today = todayKey();
+
+  // Update strip highlight
+  renderWeekStrip();
+
+  const dateObj = keyToDate(dateKey);
+  const label   = dateObj.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+  const dayData = historyData[dateKey];
+  const xp      = dayData ? (dayData.xp || 0) : 0;
+
+  document.getElementById('day-detail-big-title').textContent  = label;
+  document.getElementById('day-detail-xp-badge').textContent   = `${xp} XP`;
+
+  // Show stats only for past days
+  const statsEl = document.getElementById('history-stats-mini');
+  if (dateKey < today) {
+    // Compute overall stats
+    const keys        = Object.keys(historyData).sort();
+    const activeDays  = keys.filter(k => historyData[k]?.tasks?.length > 0).length;
+    const totalDone   = keys.reduce((sum, k) => sum + (historyData[k]?.tasks?.filter(t => t.done).length || 0), 0);
+    document.getElementById('hist-total-days').textContent  = activeDays;
+    document.getElementById('hist-total-tasks').textContent = totalDone;
+    document.getElementById('hist-best-streak').textContent = localStreak;
+    statsEl.style.display = 'grid';
+  } else {
+    statsEl.style.display = 'none';
+  }
+
+  // Render tasks
+  const tasksEl = document.getElementById('day-detail-tasks');
+  tasksEl.innerHTML = '';
+
+  if (!dayData || !dayData.tasks || dayData.tasks.length === 0) {
+    tasksEl.innerHTML = '<div class="day-detail-empty">Tidak ada task tercatat hari ini.</div>';
+  } else {
+    dayData.tasks.forEach(t => {
+      const el = document.createElement('div');
+      el.className = `day-detail-task${t.done ? ' done' : ''}`;
+      el.innerHTML = `<div class="day-detail-task-dot"></div>${escapeHtml(t.text)}`;
+      tasksEl.appendChild(el);
+    });
+  }
+
+  document.getElementById('view-today').classList.add('hidden');
+  document.getElementById('view-daydetail').classList.remove('hidden');
+}
+
+// ─── Weekly Strip ────────────────────────────────────
+const MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+
+function changeWeek(delta) {
+  weekOffset += delta;
+  renderWeekStrip();
+}
+
+function renderWeekStrip() {
+  const today    = new Date();
+  today.setHours(0,0,0,0);
+  const todayStr = dateToKey(today);
+
+  // Base: Sunday of current real week
+  const baseWeekSun = weekStart(today);
+  // Offset by weekOffset weeks
+  const stripStart  = new Date(baseWeekSun);
+  stripStart.setDate(stripStart.getDate() + weekOffset * 7);
+
+  // Build 7 days of this strip
+  const days = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(stripStart);
+    d.setDate(d.getDate() + i);
+    days.push(d);
+  }
+
+  // Month label: show month of the majority or range
+  const firstDay = days[0];
+  const lastDay  = days[6];
+  let monthLabel;
+  if (firstDay.getMonth() === lastDay.getMonth()) {
+    monthLabel = `${MONTHS_ID[firstDay.getMonth()]} ${firstDay.getFullYear()}`;
+  } else {
+    monthLabel = `${MONTHS_ID[firstDay.getMonth()]} – ${MONTHS_ID[lastDay.getMonth()]} ${lastDay.getFullYear()}`;
+  }
+  document.getElementById('week-month-label').textContent = monthLabel;
+
+  const row = document.getElementById('week-days-row');
+  row.innerHTML = '';
+
+  // Determine active date
+  const activeKey = selectedDateKey || todayStr;
+
+  days.forEach(d => {
+    const key       = dateToKey(d);
+    const isToday   = key === todayStr;
+    const isFuture  = d > today;
+    const isSelected = key === activeKey;
+    const dayData   = historyData[key];
+    const hasAct    = dayData && dayData.tasks && dayData.tasks.length > 0;
+    const allDone   = hasAct && dayData.tasks.every(t => t.done);
+
+    const el = document.createElement('div');
+    el.className = 'week-day';
+    if (isToday)   el.classList.add('is-today');
+    if (isSelected) el.classList.add('is-selected');
+    if (hasAct)    el.classList.add('has-activity');
+    if (allDone)   el.classList.add('all-done');
+
+    el.innerHTML = `<span>${d.getDate()}</span><div class="week-dot"></div>`;
+
+    if (!isFuture) {
+      el.addEventListener('click', () => {
+        if (isToday && !selectedDateKey) {
+          // Already on today view, do nothing special
+          showTodayView();
+        } else if (key === todayStr) {
+          showTodayView();
+        } else {
+          showDayDetail(key);
+        }
+      });
+    } else {
+      el.style.opacity = '0.4';
+      el.style.cursor  = 'default';
+      el.style.pointerEvents = 'none';
+    }
+
+    row.appendChild(el);
+  });
 }
 
 // ─── Task CRUD ────────────────────────────────────────
@@ -261,6 +408,7 @@ function addTask() {
   input.value = '';
   input.focus();
   renderTasks();
+  renderWeekStrip();
   syncTasks();
   saveHistoryLocal();
 }
@@ -278,6 +426,7 @@ function toggleTask(taskId) {
   }
   renderTasks();
   renderXP();
+  renderWeekStrip();
   syncTasks();
   syncXP();
   saveHistoryLocal();
@@ -293,11 +442,13 @@ function deleteTask(taskId) {
     el.classList.add('removing');
     el.addEventListener('animationend', () => {
       localTasks = localTasks.filter(t => t.id !== taskId);
-      renderTasks(); renderXP(); syncTasks(); syncXP(); saveHistoryLocal();
+      renderTasks(); renderXP(); renderWeekStrip();
+      syncTasks(); syncXP(); saveHistoryLocal();
     }, { once: true });
   } else {
     localTasks = localTasks.filter(t => t.id !== taskId);
-    renderTasks(); renderXP(); syncTasks(); syncXP(); saveHistoryLocal();
+    renderTasks(); renderXP(); renderWeekStrip();
+    syncTasks(); syncXP(); saveHistoryLocal();
   }
 }
 
@@ -339,7 +490,6 @@ function renderTasks() {
   empty.style.display = 'none';
   const done  = localTasks.filter(t => t.done).length;
   const total = localTasks.length;
-
   progress.textContent = `${done} / ${total} selesai`;
 
   localTasks.forEach(task => {
@@ -360,14 +510,14 @@ function renderTasks() {
 // ─── Render XP ────────────────────────────────────────
 function renderXP() {
   const pct = Math.min((localXP / XP_MAX_DAILY) * 100, 100);
-  document.getElementById('xp-value').textContent     = `${localXP} XP`;
-  document.getElementById('xp-bar-fill').style.width  = `${pct}%`;
-  document.getElementById('xp-bar-glow').style.width  = `${pct}%`;
+  document.getElementById('xp-value').textContent    = `${localXP} XP`;
+  document.getElementById('xp-bar-fill').style.width = `${pct}%`;
+  document.getElementById('xp-bar-glow').style.width = `${pct}%`;
   document.getElementById('streak-count').textContent = localStreak;
 
   const sub = document.getElementById('xp-sublabel');
-  if (localXP === 0)                  sub.textContent = 'Selesaikan task untuk dapat XP! ✨';
-  else if (localXP >= XP_MAX_DAILY)   sub.textContent = 'Level max hari ini! Luar biasa! 🎉';
+  if (localXP === 0)                sub.textContent = 'Selesaikan task untuk dapat XP! ✨';
+  else if (localXP >= XP_MAX_DAILY) sub.textContent = 'Level max hari ini! Luar biasa! 🎉';
   else sub.textContent = `${(XP_MAX_DAILY - localXP) / XP_PER_TASK} task lagi untuk XP max 💪`;
 }
 
@@ -386,159 +536,11 @@ function spawnXPFloat() {
   f.addEventListener('animationend', () => f.remove());
 }
 
-// ─── Calendar ─────────────────────────────────────────
-const MONTHS_ID = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
-
-function changeMonth(delta) {
-  calMonth += delta;
-  if (calMonth < 0)  { calMonth = 11; calYear--; }
-  if (calMonth > 11) { calMonth = 0;  calYear++; }
-  renderCalendar();
-}
-
-function renderCalendar() {
-  document.getElementById('cal-month-label').textContent = `${MONTHS_ID[calMonth]} ${calYear}`;
-
-  const grid  = document.getElementById('calendar-grid');
-  const today = new Date();
-  grid.innerHTML = '';
-
-  // First day of month (0=Sun)
-  const firstDay = new Date(calYear, calMonth, 1).getDay();
-  // Days in month
-  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
-
-  // Fill empty cells before
-  for (let i = 0; i < firstDay; i++) {
-    const empty = document.createElement('div');
-    empty.className = 'cal-day empty';
-    grid.appendChild(empty);
-  }
-
-  for (let d = 1; d <= daysInMonth; d++) {
-    const dateKey = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-    const dayEl   = document.createElement('div');
-    dayEl.className = 'cal-day';
-
-    const isToday = today.getFullYear() === calYear && today.getMonth() === calMonth && today.getDate() === d;
-    if (isToday) dayEl.classList.add('today');
-
-    const dayData = historyData[dateKey];
-    if (dayData && dayData.tasks && dayData.tasks.length > 0) {
-      dayEl.classList.add('has-activity');
-      if (dayData.tasks.every(t => t.done)) dayEl.classList.add('all-done');
-    }
-
-    dayEl.innerHTML = `<span>${d}</span><div class="cal-dot"></div>`;
-    dayEl.addEventListener('click', () => showDayDetail(dateKey, d));
-    grid.appendChild(dayEl);
-  }
-
-  // Hide day detail when re-rendering
-  document.getElementById('day-detail').style.display = 'none';
-}
-
-function showDayDetail(dateKey, day) {
-  // Highlight selected
-  document.querySelectorAll('.cal-day').forEach(el => el.classList.remove('selected'));
-  const allDays = document.querySelectorAll('.cal-day:not(.empty)');
-  allDays.forEach(el => {
-    const span = el.querySelector('span');
-    if (span && parseInt(span.textContent) === day) el.classList.add('selected');
-  });
-
-  const detail = document.getElementById('day-detail');
-  const title  = document.getElementById('day-detail-title');
-  const xpEl   = document.getElementById('day-detail-xp');
-  const tasksEl = document.getElementById('day-detail-tasks');
-
-  const dayData = historyData[dateKey];
-  const dateObj = new Date(dateKey + 'T00:00:00');
-  const label   = dateObj.toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' });
-
-  title.textContent = label;
-  xpEl.textContent  = dayData ? `${dayData.xp || 0} XP` : '0 XP';
-  tasksEl.innerHTML = '';
-
-  if (!dayData || !dayData.tasks || dayData.tasks.length === 0) {
-    tasksEl.innerHTML = '<p style="font-size:13px;color:var(--text-light);font-weight:600;">Tidak ada task hari ini.</p>';
-  } else {
-    dayData.tasks.forEach(t => {
-      const el = document.createElement('div');
-      el.className = `day-detail-task${t.done ? ' done' : ''}`;
-      el.innerHTML = `<div class="day-detail-task-dot"></div>${escapeHtml(t.text)}`;
-      tasksEl.appendChild(el);
-    });
-  }
-
-  detail.style.display = 'block';
-}
-
-// ─── History ──────────────────────────────────────────
-function renderHistory() {
-  const list    = document.getElementById('history-list');
-  const keys    = Object.keys(historyData).sort().reverse();
-  const today   = todayKey();
-
-  // Stats
-  const activeDays = keys.filter(k => historyData[k]?.tasks?.length > 0).length;
-  const totalDone  = keys.reduce((sum, k) => sum + (historyData[k]?.tasks?.filter(t => t.done).length || 0), 0);
-  document.getElementById('hist-total-days').textContent  = activeDays;
-  document.getElementById('hist-total-tasks').textContent = totalDone;
-  document.getElementById('hist-best-streak').textContent = localStreak;
-
-  list.innerHTML = '';
-
-  const validKeys = keys.filter(k => historyData[k]?.tasks?.length > 0);
-
-  if (validKeys.length === 0) {
-    list.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-icon">📭</div>
-        <p>Belum ada riwayat.<br>Mulai tandai task hari ini!</p>
-      </div>`;
-    return;
-  }
-
-  validKeys.forEach(dateKey => {
-    const data  = historyData[dateKey];
-    const tasks = data.tasks || [];
-    const done  = tasks.filter(t => t.done).length;
-    const total = tasks.length;
-    const xp    = data.xp || 0;
-    const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
-
-    const dateObj = new Date(dateKey + 'T00:00:00');
-    const label   = dateObj.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-
-    const card = document.createElement('div');
-    card.className = 'history-day-card';
-
-    card.innerHTML = `
-      <div class="history-day-header">
-        <span class="history-day-date">${label}${dateKey === today ? ' · Hari Ini' : ''}</span>
-        <div class="history-day-meta">
-          <span class="history-day-xp">${xp} XP</span>
-          <span class="history-day-progress">${done}/${total} ✓</span>
-          <span class="history-expand-icon">▾</span>
-        </div>
-      </div>
-      <div class="history-day-tasks">
-        ${tasks.map(t => `<span class="history-task-chip${t.done ? ' done' : ''}">${escapeHtml(t.text)}</span>`).join('')}
-      </div>
-    `;
-
-    card.addEventListener('click', () => card.classList.toggle('expanded'));
-    list.appendChild(card);
-  });
-}
-
 // ─── Notifications ────────────────────────────────────
 let notifTimers = [];
 
 function toggleNotifPanel() {
-  const panel   = document.getElementById('notif-panel');
-  const overlay = document.getElementById('notif-overlay');
+  const panel = document.getElementById('notif-panel');
   if (panel.classList.contains('hidden')) {
     openNotifPanel();
   } else {
@@ -561,7 +563,6 @@ function loadNotifSettings() {
   const enabled = localStorage.getItem('tandai_notif_enabled') === 'true';
   const morning = localStorage.getItem('tandai_notif_morning') || '08:00';
   const evening = localStorage.getItem('tandai_notif_evening') || '19:00';
-
   document.getElementById('notif-master-toggle').checked = enabled;
   document.getElementById('notif-time-morning').value    = morning;
   document.getElementById('notif-time-evening').value    = evening;
@@ -594,7 +595,7 @@ async function handleNotifToggle(enabled) {
 }
 
 function saveNotifTime(which) {
-  const val  = document.getElementById(`notif-time-${which}`).value;
+  const val = document.getElementById(`notif-time-${which}`).value;
   localStorage.setItem(`tandai_notif_${which}`, val);
   document.getElementById('notif-status').textContent = `✓ Waktu ${which === 'morning' ? 'pagi' : 'sore'} disimpan: ${val}`;
   setupNotifSchedule();
@@ -629,53 +630,32 @@ function setupNotifSchedule() {
   ['morning', 'evening'].forEach(which => {
     const timeStr = localStorage.getItem(`tandai_notif_${which}`) || (which === 'morning' ? '08:00' : '19:00');
     const [h, m]  = timeStr.split(':').map(Number);
-
-    const now   = new Date();
-    const target = new Date();
+    const now     = new Date();
+    const target  = new Date();
     target.setHours(h, m, 0, 0);
     if (target <= now) target.setDate(target.getDate() + 1);
-
     const delay = target - now;
     const messages = {
       morning: { title: '🌿 Hai! Sudah siap tandai hari ini?', body: 'Buka Tandai dan mulai task kamu ✦' },
       evening: { title: '🌙 Mau recap hari ini?', body: 'Tandai task yang belum selesai sebelum tidur 💪' },
     };
-
     const timer = setTimeout(() => {
       const msg = messages[which];
-      new Notification(msg.title, {
-        body: msg.body,
-        icon: 'icon-192.png',
-        badge: 'icon-192.png',
-        tag: `tandai-${which}`,
-      });
-      // Reschedule for tomorrow
+      new Notification(msg.title, { body: msg.body, icon: 'icon-192.png', badge: 'icon-192.png', tag: `tandai-${which}` });
       setupNotifSchedule();
     }, delay);
-
     notifTimers.push(timer);
   });
 }
 
 function sendTestNotif() {
-  if (!('Notification' in window)) {
-    alert('Browser kamu tidak mendukung notifikasi.');
-    return;
-  }
+  if (!('Notification' in window)) { alert('Browser kamu tidak mendukung notifikasi.'); return; }
   if (Notification.permission === 'granted') {
-    new Notification('✦ Halo dari Tandai!', {
-      body: 'Notifikasi berhasil dikirim. Selamat tandai! 🎉',
-      icon: 'icon-192.png',
-      tag:  'tandai-test',
-    });
+    new Notification('✦ Halo dari Tandai!', { body: 'Notifikasi berhasil dikirim. Selamat tandai! 🎉', icon: 'icon-192.png', tag: 'tandai-test' });
   } else {
     Notification.requestPermission().then(perm => {
       if (perm === 'granted') {
-        new Notification('✦ Halo dari Tandai!', {
-          body: 'Notifikasi berhasil diaktifkan! 🎉',
-          icon: 'icon-192.png',
-          tag:  'tandai-test',
-        });
+        new Notification('✦ Halo dari Tandai!', { body: 'Notifikasi berhasil diaktifkan! 🎉', icon: 'icon-192.png', tag: 'tandai-test' });
         localStorage.setItem('tandai_notif_enabled', 'true');
         document.getElementById('notif-master-toggle').checked = true;
         document.getElementById('notif-status').textContent = '✓ Notifikasi aktif';
