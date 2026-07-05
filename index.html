@@ -1,202 +1,229 @@
 <!DOCTYPE html>
-<html lang="id" data-theme="light">
+<html lang="id" data-theme="system">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Tandai | Mulai dari sini</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Tandai | System Interface</title>
 
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%236A9966'/><text x='50%25' y='54%25' font-size='20' fill='white' text-anchor='middle' dominant-baseline='middle' font-family='serif'>✦</text></svg>" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='6' fill='%23060E1C'/><text x='50%25' y='56%25' font-size='18' fill='%231A6FFF' text-anchor='middle' dominant-baseline='middle' font-family='sans-serif' font-weight='bold'>T</text></svg>" />
 
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Tandai" />
   <meta name="application-name" content="Tandai" />
-  <meta name="theme-color" content="#6A9966" />
+  <meta name="theme-color" content="#060E1C" />
 
   <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="style.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Exo+2:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 </head>
 <body>
 
+  <!-- Scanline overlay -->
+  <div class="scanlines" aria-hidden="true"></div>
+  <!-- Ambient glow orbs -->
+  <div class="ambient-glow" aria-hidden="true">
+    <span class="glow-orb glow-orb-1"></span>
+    <span class="glow-orb glow-orb-2"></span>
+    <span class="glow-orb glow-orb-3"></span>
+  </div>
+
   <!-- ===== AUTH SCREEN ===== -->
   <div id="auth-screen" class="screen active">
-    <div class="auth-wrapper">
+    <div class="auth-wrapper sys-panel">
+      <div class="panel-corner tl"></div><div class="panel-corner tr"></div>
+      <div class="panel-corner bl"></div><div class="panel-corner br"></div>
+
       <div class="auth-brand">
-        <div class="brand-icon">✦</div>
-        <h1 class="brand-title">Tandai</h1>
-        <p class="brand-sub">Tandai hari kamu mulai dari sini</p>
+        <div class="brand-tag" id="auth-brand-tag">SYSTEM INTERFACE</div>
+        <div class="brand-icon">◈</div>
+        <h1 class="brand-title">TANDAI<span class="dot">.</span></h1>
+        <p class="brand-sub" id="auth-brand-sub">Bangkit. Tandai pencarianmu, mulai dari sini.</p>
       </div>
 
       <div id="login-card" class="auth-card active">
-        <h2 class="auth-heading">Selamat datang kembali</h2>
+        <h2 class="auth-heading" id="login-heading">[ MASUK KE SISTEM ]</h2>
         <div class="field-group">
-          <label>Username</label>
+          <label id="login-label-user">Nama Hunter</label>
           <input type="text" id="login-username" placeholder="nama kamu..." autocomplete="username" />
         </div>
         <div class="field-group">
-          <label>Password</label>
+          <label id="login-label-pass">Kata Sandi</label>
           <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" />
         </div>
         <div id="login-error" class="auth-error hidden"></div>
-        <button class="btn-primary" onclick="handleLogin()">Masuk →</button>
-        <p class="auth-switch">Belum punya akun? <span onclick="switchToSignup()">Daftar sekarang</span></p>
+        <button class="btn-primary" id="login-btn" onclick="handleLogin()">MASUK →</button>
+        <p class="auth-switch" id="login-switch-text">Belum terdaftar? <span onclick="switchToSignup()">Daftar sebagai Hunter</span></p>
       </div>
 
       <div id="signup-card" class="auth-card">
-        <h2 class="auth-heading">Mulai perjalananmu</h2>
+        <h2 class="auth-heading" id="signup-heading">[ AWAKENING — DAFTAR ]</h2>
         <div class="field-group">
-          <label>Username</label>
+          <label id="signup-label-user">Nama Hunter</label>
           <input type="text" id="signup-username" placeholder="nama kamu..." autocomplete="username" />
         </div>
         <div class="field-group">
-          <label>Password</label>
+          <label id="signup-label-pass">Kata Sandi</label>
           <input type="password" id="signup-password" placeholder="••••••••" autocomplete="new-password" />
         </div>
         <div id="signup-error" class="auth-error hidden"></div>
-        <button class="btn-primary" onclick="handleSignup()">Buat Akun →</button>
-        <p class="auth-switch">Sudah punya akun? <span onclick="switchToLogin()">Masuk</span></p>
+        <button class="btn-primary" id="signup-btn" onclick="handleSignup()">BANGKIT →</button>
+        <p class="auth-switch" id="signup-switch-text">Sudah punya akun? <span onclick="switchToLogin()">Masuk</span></p>
       </div>
-    </div>
 
-    <div class="auth-deco auth-deco-1">◌</div>
-    <div class="auth-deco auth-deco-2">✦</div>
-    <div class="auth-deco auth-deco-3">◌</div>
+      <div class="auth-lang-toggle" id="auth-lang-toggle"></div>
+    </div>
   </div>
 
-  <!-- ===== MAIN SCREEN (single page) ===== -->
+  <!-- ===== MAIN SCREEN ===== -->
   <div id="dashboard-screen" class="screen">
     <div class="dash-wrapper">
+
+      <!-- Floating EXP text container -->
+      <div id="xp-floats" class="xp-floats"></div>
 
       <!-- Header -->
       <header class="dash-header">
         <div class="header-left">
-          <div class="header-brand">✦ Tandai</div>
-          <h2 class="header-greeting">Hai, <span id="display-username">kamu</span></h2>
+          <div class="header-brand-row">
+            <span class="brand-pip"></span>
+            <span class="header-brand-label" id="hdr-system-label">SYSTEM INTERFACE — DAILY QUEST LOG</span>
+          </div>
+          <h1 class="header-day-title" id="hdr-day-title">HARI<span class="dot">.</span></h1>
+          <p class="header-date-sub" id="hdr-date-sub">— Hari 0</p>
         </div>
         <div class="header-right">
-          <div class="streak-badge" id="streak-badge">
-            <span class="streak-fire">🔥</span>
-            <span id="streak-count">0</span>
-            <span class="streak-label">hari</span>
+          <div class="header-controls-row">
+            <div class="lang-toggle" id="lang-toggle"></div>
+            <button class="btn-icon" onclick="toggleNotifPanel()" title="Notifikasi">🔔</button>
+            <button class="btn-icon btn-logout" onclick="handleLogout()" title="Keluar">↩</button>
           </div>
-          <button class="btn-icon" onclick="toggleDarkMode()" title="Ganti tema">
-            <span id="darkmode-icon">🌙</span>
-          </button>
-          <button class="btn-icon" onclick="toggleNotifPanel()" title="Notifikasi">
-            <span>🔔</span>
-          </button>
-          <button class="btn-logout" onclick="handleLogout()" title="Keluar">↩</button>
+          <div class="player-level-block">
+            <p class="player-label" id="hdr-monarch-label">SHADOW MONARCH</p>
+            <p class="player-level"><span id="hdr-username-display">kamu</span></p>
+            <p class="player-level-num"><span id="hdr-lv-label">Lv.</span><span id="player-level-value">1</span></p>
+            <p class="player-exp" id="player-exp-value">0 EXP</p>
+          </div>
         </div>
       </header>
 
-      <!-- ── WEEKLY CALENDAR STRIP ── -->
-      <section class="week-strip-section">
-        <div class="week-strip-nav">
-          <button class="week-nav-btn" onclick="changeWeek(-1)" title="Minggu sebelumnya">‹</button>
-          <span class="week-month-label" id="week-month-label">Mei 2025</span>
-          <button class="week-nav-btn" onclick="changeWeek(1)" title="Minggu berikutnya">›</button>
+      <!-- Quest progress bar -->
+      <section class="progress-section">
+        <div class="progress-labels">
+          <span id="progress-label">QUEST PROGRESS</span>
+          <span id="progress-pct">0%</span>
         </div>
-        <div class="week-days-header">
-          <span>Min</span><span>Sen</span><span>Sel</span><span>Rab</span>
-          <span>Kam</span><span>Jum</span><span>Sab</span>
+        <div class="progress-track">
+          <div class="progress-fill" id="progress-fill"></div>
         </div>
-        <div class="week-days-row" id="week-days-row"></div>
       </section>
 
-      <!-- ── XP SECTION ── -->
-      <section class="xp-section">
-        <div class="xp-info">
-          <span class="xp-label">XP hari ini</span>
-          <span class="xp-value" id="xp-value">0 XP</span>
+      <!-- Stats row -->
+      <section class="stats-row">
+        <div class="stat-card sys-panel">
+          <div class="stat-icon-row"><span class="stat-icon">⚔</span><span class="stat-label" id="stat-label-clear">QUESTS CLEAR</span></div>
+          <p class="stat-value" id="stat-value-clear">0/0</p>
         </div>
-        <div class="xp-bar-track">
-          <div class="xp-bar-fill" id="xp-bar-fill"></div>
-          <div class="xp-bar-glow" id="xp-bar-glow"></div>
+        <div class="stat-card sys-panel accent-orange">
+          <div class="stat-icon-row"><span class="stat-icon">🔥</span><span class="stat-label" id="stat-label-streak">BEST STREAK</span></div>
+          <p class="stat-value" id="stat-value-streak">0D</p>
         </div>
-        <div class="xp-sublabel" id="xp-sublabel">Selesaikan task untuk dapat XP!</div>
+        <div class="stat-card sys-panel accent-gold">
+          <div class="stat-icon-row"><span class="stat-icon">★</span><span class="stat-label" id="stat-label-rate">WEEKLY RATE</span></div>
+          <p class="stat-value" id="stat-value-rate">—</p>
+        </div>
       </section>
 
-      <!-- ── CONTENT AREA: today tasks OR day detail ── -->
-      <div id="content-area">
+      <div class="main-grid">
 
-        <!-- TODAY VIEW -->
-        <div id="view-today">
-          <section class="task-input-section">
-            <div class="input-row">
-              <input type="text" id="task-input" placeholder="Mau tandai apa hari ini?" maxlength="80"
-                onkeydown="if(event.key==='Enter') addTask()" />
-              <button class="btn-add" onclick="addTask()"><span>+</span></button>
-            </div>
-          </section>
+        <!-- ── QUEST LIST ── -->
+        <div class="quest-list-col">
+          <div class="section-title-row">
+            <span class="section-icon">🛡</span>
+            <h2 id="section-title-quests">DAILY QUESTS</h2>
+            <span class="title-line"></span>
+          </div>
 
-          <section class="task-section">
-            <div class="task-header-row">
-              <span class="task-section-title">Daftar Tandai</span>
-              <span class="task-progress-text" id="task-progress-text">0 / 0 selesai</span>
+          <div id="quest-list" class="quest-list">
+            <div class="empty-state" id="empty-state">
+              <div class="empty-icon">◌</div>
+              <p id="empty-state-text">Belum ada quest hari ini.<br>Daftarkan pencarian pertamamu!</p>
             </div>
-            <div id="task-list" class="task-list">
-              <div class="empty-state" id="empty-state">
-                <div class="empty-icon">🌿</div>
-                <p>Belum ada task hari ini.<br>Yuk, mulai tandai sesuatu!</p>
+          </div>
+
+          <!-- Add quest -->
+          <button class="btn-add-quest" id="btn-show-add-quest" onclick="showAddQuestForm()">
+            <span class="plus">+</span><span id="btn-add-quest-label">[ DAFTARKAN PENCARIAN BARU ]</span>
+          </button>
+
+          <div class="add-quest-form hidden" id="add-quest-form">
+            <p class="add-quest-title" id="add-quest-title-label">[ DAFTARKAN PENCARIAN BARU ]</p>
+            <input type="text" id="quest-input" maxlength="80" placeholder="Nama pencarian..."
+              onkeydown="if(event.key==='Enter') addQuest(); if(event.key==='Escape') hideAddQuestForm();" />
+            <div class="add-quest-footer">
+              <div class="rank-select" id="rank-select"></div>
+              <div class="add-quest-actions">
+                <button class="btn-cancel" id="btn-cancel-quest" onclick="hideAddQuestForm()">BATAL</button>
+                <button class="btn-confirm" id="btn-confirm-quest" onclick="addQuest()">KONFIRMASI</button>
               </div>
             </div>
-          </section>
+          </div>
         </div>
 
-        <!-- HISTORY / DAY DETAIL VIEW -->
-        <div id="view-daydetail" class="hidden">
-          <section class="day-detail-section">
-            <div class="day-detail-back-row">
-              <button class="btn-back" onclick="showTodayView()">← Hari Ini</button>
-              <div class="day-detail-badge" id="day-detail-xp-badge">0 XP</div>
-            </div>
-            <div class="day-detail-title-row">
-              <span class="day-detail-big-title" id="day-detail-big-title">Tanggal</span>
-            </div>
+        <!-- ── QUEST LOG (weekly grid) ── -->
+        <div class="quest-log-col">
+          <div class="sys-panel quest-log-panel">
+            <div class="panel-corner tl"></div><div class="panel-corner tr"></div>
+            <div class="panel-corner bl"></div><div class="panel-corner br"></div>
 
-            <!-- Stats row (only shown when viewing past) -->
-            <div class="history-stats-mini" id="history-stats-mini">
-              <div class="stat-mini-card">
-                <span class="stat-mini-num" id="hist-total-days">0</span>
-                <span class="stat-mini-label">Hari Aktif</span>
+            <div class="quest-log-header">
+              <div>
+                <p class="quest-log-tag" id="quest-log-tag">QUEST LOG</p>
+                <p class="quest-log-week" id="quest-log-week">MINGGU INI</p>
               </div>
-              <div class="stat-mini-card">
-                <span class="stat-mini-num" id="hist-total-tasks">0</span>
-                <span class="stat-mini-label">Task Selesai</span>
-              </div>
-              <div class="stat-mini-card">
-                <span class="stat-mini-num" id="hist-best-streak">0</span>
-                <span class="stat-mini-label">Streak Terbaik</span>
+              <div class="week-nav">
+                <button onclick="changeWeek(-1)" title="Minggu sebelumnya">‹</button>
+                <button onclick="changeWeek(1)" id="week-next-btn" title="Minggu berikutnya">›</button>
               </div>
             </div>
 
-            <div class="day-detail-tasks" id="day-detail-tasks"></div>
-          </section>
+            <div class="quest-grid-days" id="quest-grid-days"></div>
+            <div class="quest-grid-rows" id="quest-grid-rows"></div>
+
+            <div class="weekly-summary" id="weekly-summary">
+              <p class="weekly-summary-label" id="weekly-summary-label">PENYELESAIAN MINGGUAN</p>
+              <div class="weekly-summary-bars" id="weekly-summary-bars"></div>
+              <div class="rank-legend" id="rank-legend"></div>
+            </div>
+          </div>
+
+          <div class="motivation-box" id="motivation-box">
+            <p id="motivation-text">[ YANG LEMAH TIDAK BERHAK MEMILIH ]</p>
+          </div>
         </div>
 
-      </div><!-- /content-area -->
-
-    </div><!-- /dash-wrapper -->
-    <div id="xp-floats" class="xp-floats"></div>
+      </div>
+    </div>
   </div>
 
   <!-- ===== NOTIFICATION PANEL ===== -->
   <div id="notif-overlay" class="notif-overlay hidden" onclick="closeNotifPanel()"></div>
-  <div id="notif-panel" class="notif-panel hidden">
+  <div id="notif-panel" class="notif-panel hidden sys-panel">
+    <div class="panel-corner tl"></div><div class="panel-corner tr"></div>
+    <div class="panel-corner bl"></div><div class="panel-corner br"></div>
     <div class="notif-panel-header">
-      <h3>🔔 Pengingat Harian</h3>
+      <h3 id="notif-title">🔔 PENGINGAT SISTEM</h3>
       <button class="notif-close" onclick="closeNotifPanel()">✕</button>
     </div>
     <div class="notif-body">
-      <p class="notif-desc">Atur waktu notifikasi supaya kamu ingat untuk tandai task setiap hari.</p>
+      <p class="notif-desc" id="notif-desc">Atur waktu notifikasi supaya kamu ingat menyelesaikan quest setiap hari.</p>
 
       <div class="notif-toggle-row">
-        <span class="notif-toggle-label">Aktifkan Notifikasi</span>
+        <span class="notif-toggle-label" id="notif-toggle-label">Aktifkan Notifikasi</span>
         <label class="toggle-switch">
           <input type="checkbox" id="notif-master-toggle" onchange="handleNotifToggle(this.checked)" />
           <span class="toggle-slider"></span>
@@ -204,21 +231,21 @@
       </div>
 
       <div class="notif-time-section" id="notif-time-section">
-        <label class="notif-time-label">Waktu Pengingat Pagi</label>
+        <label class="notif-time-label" id="notif-time-label-morning">Waktu Pengingat Pagi</label>
         <div class="notif-time-row">
           <input type="time" id="notif-time-morning" value="08:00" class="notif-time-input" />
-          <button class="btn-notif-save" onclick="saveNotifTime('morning')">Simpan</button>
+          <button class="btn-notif-save" onclick="saveNotifTime('morning')" id="notif-save-morning">Simpan</button>
         </div>
-        <label class="notif-time-label" style="margin-top:12px;">Waktu Pengingat Sore</label>
+        <label class="notif-time-label" id="notif-time-label-evening" style="margin-top:12px;">Waktu Pengingat Sore</label>
         <div class="notif-time-row">
           <input type="time" id="notif-time-evening" value="19:00" class="notif-time-input" />
-          <button class="btn-notif-save" onclick="saveNotifTime('evening')">Simpan</button>
+          <button class="btn-notif-save" onclick="saveNotifTime('evening')" id="notif-save-evening">Simpan</button>
         </div>
         <div class="notif-status" id="notif-status"></div>
       </div>
 
       <div class="notif-test-row">
-        <button class="btn-notif-test" onclick="sendTestNotif()">Kirim Notifikasi Test 🔔</button>
+        <button class="btn-notif-test" onclick="sendTestNotif()" id="notif-test-btn">Kirim Notifikasi Test 🔔</button>
       </div>
 
       <p class="notif-note" id="notif-permission-note"></p>

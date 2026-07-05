@@ -1,11 +1,11 @@
 {
-  "name": "Tandai | Mulai dari sini",
+  "name": "Tandai | System Interface",
   "short_name": "Tandai",
-  "description": "Daily task tracker yang cozy & gamified",
+  "description": "Daily quest tracker bergaya Solo Leveling — rank quest, EXP, level, dan streak hunter.",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#F6F1E8",
-  "theme_color": "#6A9966",
+  "background_color": "#000308",
+  "theme_color": "#060E1C",
   "orientation": "portrait",
   "icons": [
     {
